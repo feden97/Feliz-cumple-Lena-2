@@ -45,6 +45,7 @@
             text-align: center; margin: 10px;
         }
 
+
         /* --- TARTA (DISEÑO BRILLANTE) --- */
         .title-pastel {
             font-size: 3.5rem; color: #fff;
@@ -212,6 +213,10 @@
 </head>
 <body>
 
+<audio id="bgMusic" loop>
+    <source src="musica.mp3" type="audio/mpeg">
+</audio>
+
     <canvas id="bg-canvas"></canvas>
 
     <div id="ui-layer">
@@ -347,6 +352,8 @@
         
         cakeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+const music = document.getElementById('bgMusic');
+            if(music.paused) music.play();
             taps++;
             document.getElementById('progressBar').style.width = `${(taps/tapsGoal)*100}%`;
             cakeBtn.style.transform = `scale(${1 + taps*0.02})`;
