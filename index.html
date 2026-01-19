@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Feliz cumpleaños Lena ❤️✨</title>
+    <title>Feliz Cumpleaños Lena ❤️✨</title>
+    <!-- Librerías con manejo de errores silencioso en JS -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
@@ -20,7 +21,7 @@
 
         #bg-canvas {
             position: fixed; top: 0; left: 0; z-index: 0;
-            opacity: 0.6; transition: opacity 1s;
+            opacity: 0.6; transition: opacity 1s; pointer-events: none;
         }
 
         #ui-layer {
@@ -44,7 +45,7 @@
             text-align: center; margin: 10px;
         }
 
-        /* --- TARTA (REDISEÑO BRILLANTE) --- */
+        /* --- TARTA (DISEÑO BRILLANTE) --- */
         .title-pastel {
             font-size: 3.5rem; color: #fff;
             text-shadow: 3px 3px 0px #ff8a80; animation: bounce 2s infinite;
@@ -80,7 +81,7 @@
             border-bottom: 4px solid #fff59d;
         }
         
-        /* Glaseado Goteando */
+        /* Glaseado */
         .icing {
             position: absolute; top: -10px; left: -2%; width: 104%; height: 35px;
             background: #fff; border-radius: 15px;
@@ -164,7 +165,7 @@
             width: 100%; padding: 15px; margin: 8px 0; background: #fff; 
             border: 2px solid #ff4081; border-radius: 50px; color: #ff4081; 
             font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
-            box-shadow: 0 4px 0 #f06292; /* Efecto 3D simple */
+            box-shadow: 0 4px 0 #f06292;
         }
         .trivia-btn:active { transform: translateY(4px); box-shadow: none; }
         .trivia-question { font-size: 1.3rem; font-weight: bold; color: #5d4037; margin-bottom: 20px; text-align: center; }
@@ -215,9 +216,9 @@
 
     <div id="ui-layer">
         
-        <!-- 1. TARTA (NUEVA Y BRILLANTE) -->
+        <!-- 1. TARTA -->
         <div id="screen-cake" class="screen">
-            <div class="title-pastel">Felices 13<br>Magda</div>
+            <div class="title-pastel">Feliz cumpleaños<br>mi amor, mi vida. Lena ❤️</div>
             <div class="cake-container" id="cakeBtn">
                 <div class="plate"></div>
                 <div class="layer-bottom"><div class="icing"></div></div>
@@ -241,7 +242,7 @@
             <p style="position: absolute; bottom: 5%; color: #fff; font-weight: bold;">Desliza los recuerdos ❤️</p>
         </div>
 
-        <!-- 4. RESUMEN TRANSICIÓN -->
+        <!-- 4. RESUMEN -->
         <div id="screen-summary" class="screen hidden">
             <h2 style="color:white; text-shadow: 2px 2px 0 #ff4081;">Nuestros lindos momentos</h2>
             <div class="summary-grid" id="summaryGrid"></div>
@@ -270,52 +271,77 @@
     </div>
 
     <script>
-        // --- DATA ---
-        const photos = [
-            { src: '1000202417.jpg', caption: 'La mas hermosa🐢❤️ },
-            { src: '1000202416.jpg', caption: 'Que MUJER😍' },
-            { src: '1000204235.jpg', caption: 'Bonita bella lindaaa💕' },
+        // --- FUNCIÓN SEGURA PARA CONFETI ---
+        function safeConfetti(options) {
+            if (typeof confetti === 'function') {
+                confetti(options);
+            }
+        }
+
+        // --- 1. FOTOS DE LA GALERÍA (INICIAL) ---
+        // Estas son las que se ven al principio en la pila
+        const galleryPhotos = [
+            { src: '1000202417.jpg', caption: 'La mas hermosa🐢❤️' },
+            { src: '1000202418.jpg', caption: 'Que MUJER😍' },
+            { src: 'Video2.mp4', caption: 'Bonita bella lindaaa💕' },
             { src: '1000202414.jpg', caption: 'Preciosa hermosa guapa🥰' },
             { src: '1000202415.jpg', caption: 'Te Amuuu❤️' },
-            { src: '1000202416.jpg', caption: 'Mi princesita hermosa' } 
+            { src: '1000202416.mp4', caption: 'Mi princesita hermosa' } 
         ];
 
-        // --- 1. THREE.JS ---
-        const canvas = document.getElementById('bg-canvas');
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        // --- 2. FOTOS PARA EL JUEGO DE MEMORIA (NUEVO) ---
+        // IMPORTANTE: Sube estas fotos nuevas a la carpeta con estos nombres o cámbialos aquí.
+        const memoryPhotos = [
+            { src: 'memoria1.jpg' }, 
+            { src: 'memoria2.jpg' },
+            { src: 'memoria3.jpg' },
+            { src: 'memoria4.jpg' },
+            { src: 'memoria5.jpg' },
+            { src: 'memoria6.jpg' }
+        ];
 
-        const partGeo = new THREE.BufferGeometry();
-        const partCount = 2000;
-        const partPos = new Float32Array(partCount*3);
-        const partColors = new Float32Array(partCount*3);
-        const c1 = new THREE.Color(0xffffff); 
-        const c2 = new THREE.Color(0xfff9c4); 
-        const c3 = new THREE.Color(0xf8bbd0); 
+        // --- 3. THREE.JS (FONDO SEGURO) ---
+        try {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
 
-        for(let i=0; i<partCount*3; i+=3){
-            partPos[i] = (Math.random()-0.5)*1500;
-            partPos[i+1] = (Math.random()-0.5)*1500;
-            partPos[i+2] = (Math.random()-0.5)*1500;
-            let c = Math.random()<0.33?c1:(Math.random()<0.5?c2:c3);
-            partColors[i]=c.r; partColors[i+1]=c.g; partColors[i+2]=c.b;
-        }
-        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos,3));
-        partGeo.setAttribute('color', new THREE.BufferAttribute(partColors,3));
-        const particles = new THREE.Points(partGeo, new THREE.PointsMaterial({size:5, vertexColors:true, transparent:true, opacity:0.7}));
-        scene.add(particles);
-        camera.position.z = 100;
+            const partGeo = new THREE.BufferGeometry();
+            const partCount = 1500;
+            const partPos = new Float32Array(partCount*3);
+            const partColors = new Float32Array(partCount*3);
+            const c1 = new THREE.Color(0xffffff); 
+            const c2 = new THREE.Color(0xfff9c4); 
+            const c3 = new THREE.Color(0xf8bbd0); 
 
-        function animateBg() {
-            requestAnimationFrame(animateBg);
-            particles.rotation.y += 0.001; particles.rotation.x += 0.0005;
-            renderer.render(scene, camera);
-        }
-        animateBg();
+            for(let i=0; i<partCount*3; i+=3){
+                partPos[i] = (Math.random()-0.5)*1500;
+                partPos[i+1] = (Math.random()-0.5)*1500;
+                partPos[i+2] = (Math.random()-0.5)*1500;
+                let c = Math.random()<0.33?c1:(Math.random()<0.5?c2:c3);
+                partColors[i]=c.r; partColors[i+1]=c.g; partColors[i+2]=c.b;
+            }
+            partGeo.setAttribute('position', new THREE.BufferAttribute(partPos,3));
+            partGeo.setAttribute('color', new THREE.BufferAttribute(partColors,3));
+            const particles = new THREE.Points(partGeo, new THREE.PointsMaterial({size:5, vertexColors:true, transparent:true, opacity:0.7}));
+            scene.add(particles);
+            camera.position.z = 100;
 
-        // --- 2. NAVEGACIÓN ---
+            function animateBg() {
+                requestAnimationFrame(animateBg);
+                particles.rotation.y += 0.001; particles.rotation.x += 0.0005;
+                renderer.render(scene, camera);
+            }
+            animateBg();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        } catch (e) { console.log("Three.js no cargó, pero el juego sigue."); }
+
+        // --- 4. LÓGICA DE NAVEGACIÓN ---
         let taps = 0; const tapsGoal = 15;
         const cakeBtn = document.getElementById('cakeBtn');
         
@@ -324,7 +350,7 @@
             taps++;
             document.getElementById('progressBar').style.width = `${(taps/tapsGoal)*100}%`;
             cakeBtn.style.transform = `scale(${1 + taps*0.02})`;
-            confetti({ particleCount: 15, spread: 40, origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight }, colors: ['#ff4081', '#ffca28', '#fff'] });
+            safeConfetti({ particleCount: 15, spread: 40, origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight }, colors: ['#ff4081', '#ffca28', '#fff'] });
             if(taps >= tapsGoal) startFlight();
             else setTimeout(()=>cakeBtn.style.transform='scale(1)', 100);
         });
@@ -336,20 +362,22 @@
 
         function startFlight() {
             switchScreen('screen-cake', 'screen-flight');
-            document.getElementById('bg-canvas').style.opacity = '0';
+            const bg = document.getElementById('bg-canvas');
+            if(bg) bg.style.opacity = '0';
+            
             const msgs = ["Eres Increíble ✨", "Te Quiero Mucho ❤️", "Felices 13 Años 🎉"];
             const el = document.getElementById('flight-msg');
             let delay = 0;
             msgs.forEach(txt => {
                 setTimeout(() => {
                     el.innerText = txt; el.classList.add('visible-msg');
-                    confetti({ particleCount: 30, spread: 100, origin: { y: 1 } });
+                    safeConfetti({ particleCount: 30, spread: 100, origin: { y: 1 } });
                     setTimeout(() => el.classList.remove('visible-msg'), 2000);
                 }, delay);
                 delay += 2500;
             });
             setTimeout(() => {
-                document.getElementById('bg-canvas').style.opacity = '0.6';
+                if(bg) bg.style.opacity = '0.6';
                 startGallery();
             }, delay+500);
         }
@@ -357,12 +385,13 @@
         function startGallery() {
             switchScreen('screen-flight', 'screen-gallery');
             const cont = document.getElementById('stackContainer');
-            photos.slice().reverse().forEach((p, i) => {
+            // Usamos galleryPhotos
+            galleryPhotos.slice().reverse().forEach((p, i) => {
                 const card = document.createElement('div');
                 card.className = 'photo-card';
                 card.style.transform = `rotate(${(Math.random()-0.5)*10}deg)`;
                 card.style.zIndex = i;
-                card.innerHTML = `<img src="${p.src}"><div class="photo-caption">${p.caption}</div>`;
+                card.innerHTML = `<img src="${p.src}" onerror="this.src='https://via.placeholder.com/300x400?text=Foto'"><div class="photo-caption">${p.caption}</div>`;
                 card.onclick = () => {
                     card.style.transform = `translate(100vw, -20vh) rotate(45deg)`;
                     setTimeout(() => { card.remove(); if(cont.children.length===0) showSummary(); }, 300);
@@ -374,15 +403,18 @@
         function showSummary() {
             switchScreen('screen-gallery', 'screen-summary');
             const grid = document.getElementById('summaryGrid');
-            photos.forEach(p => {
-                const img = document.createElement('img'); img.src = p.src; img.className = 'summary-img';
+            galleryPhotos.forEach(p => {
+                const img = document.createElement('img'); 
+                img.src = p.src; 
+                img.onerror = function() {this.style.display='none'}; 
+                img.className = 'summary-img';
                 grid.appendChild(img);
             });
         }
 
         function endGameToFinal() {
             switchScreen('screen-game', 'screen-final');
-            confetti({ particleCount: 200, spread: 120, origin: { y: 0.6 } });
+            safeConfetti({ particleCount: 200, spread: 120, origin: { y: 0.6 } });
         }
 
         // --- JUEGO 1: TRIVIA ---
@@ -426,7 +458,7 @@
         function checkTrivia(btn, correct) {
             if(correct === 'true') {
                 btn.style.background = "#b9f6ca"; btn.style.borderColor = "#00c853"; btn.style.color = "#00c853";
-                confetti({ particleCount: 20, spread: 50, origin: { y: 0.6 } });
+                safeConfetti({ particleCount: 20, spread: 50, origin: { y: 0.6 } });
                 qIndex++; setTimeout(renderTrivia, 800);
             } else {
                 btn.style.background = "#ffcdd2"; btn.style.borderColor = "#e53935"; btn.style.color = "#e53935";
@@ -434,12 +466,13 @@
             }
         }
 
-        // --- JUEGO 2: MEMORIA ---
+        // --- JUEGO 2: MEMORIA (CON FOTOS DISTINTAS) ---
         function startMemory() {
             const cont = document.getElementById('game-content');
             cont.innerHTML = `<h3 style="color:#ff4081">Memoria de Amor</h3><div class="memory-grid" id="memGrid"></div>`;
             
-            let cards = [...photos, ...photos];
+            // Usamos memoryPhotos (Duplicamos para pares)
+            let cards = [...memoryPhotos, ...memoryPhotos];
             cards.sort(() => Math.random() - 0.5);
             
             const grid = document.getElementById('memGrid');
@@ -447,15 +480,16 @@
 
             cards.forEach((p) => {
                 const el = document.createElement('div'); el.className = 'mem-card';
-                el.innerHTML = `<img src="${p.src}">`;
+                // Añadido placeholder por si no están las fotos
+                el.innerHTML = `<img src="${p.src}" onerror="this.src='https://via.placeholder.com/100/ff4081/ffffff?text=?'">`;
                 el.onclick = () => {
                     if(el.classList.contains('flipped') || flipped.length >= 2) return;
                     el.classList.add('flipped'); flipped.push({el, src: p.src});
                     if(flipped.length === 2) {
                         if(flipped[0].src === flipped[1].src) {
                             matched++; flipped = [];
-                            if(matched === 6) { 
-                                confetti({ particleCount: 200, spread: 100 });
+                            if(matched === 6) { // 6 pares
+                                safeConfetti({ particleCount: 200, spread: 100 });
                                 setTimeout(() => {
                                     cont.innerHTML = `<h2>¡Genial! 🃏❤️</h2><p>Nivel 2 Completado</p><button class="btn-game" onclick="startCatcher()">Nivel Final >></button>`;
                                 }, 1500);
@@ -536,7 +570,7 @@
                         } else {
                             score++;
                             document.getElementById('cScore').innerText = score;
-                            if(score % 5 === 0) confetti({ particleCount: 10, spread: 30, origin: { y: 0.8 } });
+                            if(score % 5 === 0) safeConfetti({ particleCount: 10, spread: 30, origin: { y: 0.8 } });
                         }
                         items.splice(i, 1); i--;
                     }
@@ -547,12 +581,11 @@
             }
             loop();
         }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
+
+
+>
 
 
