@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feliz cumpleaños Lena ❤️✨</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS GENERALES --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #ffdde1 0%, #ee9ca7 100%);
+            color: #5d4037; font-family: 'Quicksand', sans-serif;
+            overflow: hidden; touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #bg-canvas {
+            position: fixed; top: 0; left: 0; z-index: 0;
+            opacity: 0.6; transition: opacity 1s;
+        }
+
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; pointer-events: none;
+        }
+
+        .screen {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.5s ease; pointer-events: auto;
+        }
+        
+        .hidden { display: none !important; opacity: 0; }
+
+        h1, h2, h3 {
+            font-family: 'Pacifico', cursive; color: #fff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            text-align: center; margin: 10px;
+        }
+
+        /* --- TARTA (REDISEÑO BRILLANTE) --- */
+        .title-pastel {
+            font-size: 3.5rem; color: #fff;
+            text-shadow: 3px 3px 0px #ff8a80; animation: bounce 2s infinite;
+        }
+        .cake-container {
+            position: relative; width: 250px; height: 250px;
+            cursor: pointer; margin-top: 20px; transition: transform 0.1s;
+        }
+        .cake-container:active { transform: scale(0.95); }
+        
+        .plate {
+            position: absolute; bottom: 0; left: 15px; width: 220px; height: 12px;
+            background: #fff; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Pisos de colores Vivos */
+        .layer-bottom {
+            position: absolute; bottom: 12px; left: 25px; width: 200px; height: 80px;
+            background: #ffccbc; /* Durazno suave */
+            border-radius: 10px 10px 5px 5px;
+            border-bottom: 4px solid #ffab91;
+        }
+        .layer-middle {
+            position: absolute; bottom: 92px; left: 40px; width: 170px; height: 70px;
+            background: #f8bbd0; /* Rosa pastel */
+            border-radius: 10px 10px 5px 5px;
+            border-bottom: 4px solid #f48fb1;
+        }
+        .layer-top {
+            position: absolute; bottom: 162px; left: 55px; width: 140px; height: 60px;
+            background: #fff9c4; /* Amarillo Crema */
+            border-radius: 10px 10px 5px 5px;
+            border-bottom: 4px solid #fff59d;
+        }
+        
+        /* Glaseado Goteando */
+        .icing {
+            position: absolute; top: -10px; left: -2%; width: 104%; height: 35px;
+            background: #fff; border-radius: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .icing::after {
+            content: ''; position: absolute; top: 15px; width: 100%; height: 20px;
+            background: radial-gradient(circle at 12px 0, #fff 10px, transparent 11px);
+            background-size: 24px 25px; background-repeat: repeat-x;
+        }
+
+        .candle {
+            position: absolute; bottom: 222px; left: 115px; width: 20px; height: 50px;
+            background: repeating-linear-gradient(45deg, #29b6f6, #29b6f6 5px, #fff 5px, #fff 10px);
+            border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .flame {
+            position: absolute; top: -25px; left: 2px; width: 16px; height: 25px;
+            background: #ffca28; border-radius: 50% 50% 20% 20%;
+            animation: flicker 0.5s infinite alternate; box-shadow: 0 0 20px #ffca28;
+        }
+        .progress-wrapper {
+            width: 220px; height: 16px; background: rgba(255,255,255,0.4);
+            border-radius: 20px; margin-top: 15px; overflow: hidden; border: 2px solid #fff;
+        }
+        .progress-fill { width: 0%; height: 100%; background: #ff4081; transition: width 0.1s; }
+
+        /* --- MENSAJES --- */
+        .flying-msg {
+            font-size: 2.2rem; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            text-align: center; font-family: 'Fredoka', sans-serif;
+            opacity: 0; transform: scale(0.5); transition: all 0.5s; max-width: 90%;
+            background: rgba(255,255,255,0.2); padding: 20px; border-radius: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .visible-msg { opacity: 1; transform: scale(1); }
+
+        /* --- GALERIA --- */
+        .stack-area { position: relative; width: 280px; height: 400px; }
+        .photo-card {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; padding: 15px; box-sizing: border-box;
+            border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            transform-origin: center bottom; transition: transform 0.5s, opacity 0.5s;
+            display: flex; flex-direction: column; align-items: center; border: 4px solid #fff;
+        }
+        .photo-card img {
+            width: 100%; height: 280px; object-fit: cover; border-radius: 12px; background: #eee;
+        }
+        .photo-caption {
+            margin-top: 15px; font-family: 'Pacifico'; font-size: 1.5rem; color: #ff4081; text-align: center;
+        }
+
+        /* --- RESUMEN (TRANSICIÓN) --- */
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+            width: 90%; max-width: 350px; margin-bottom: 20px;
+            background: rgba(255,255,255,0.8); padding: 10px; border-radius: 20px;
+        }
+        .summary-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+
+        .btn-game {
+            background: #ff4081; color: white; border: none; padding: 16px 32px;
+            border-radius: 50px; font-size: 1.3rem; font-family: 'Fredoka';
+            cursor: pointer; box-shadow: 0 8px 20px rgba(255, 64, 129, 0.4);
+            animation: pulse 2s infinite; transition: transform 0.2s;
+            border: 2px solid white;
+        }
+        .btn-game:active { transform: scale(0.95); }
+
+        /* --- PANTALLA JUEGOS --- */
+        .game-container {
+            background: #ffffff; width: 90%; max-width: 360px; height: auto; min-height: 400px;
+            padding: 25px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            position: relative; overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
+        /* JUEGO 1: TRIVIA (MEJORADA) */
+        .trivia-btn {
+            width: 100%; padding: 15px; margin: 8px 0; background: #fff; 
+            border: 2px solid #ff4081; border-radius: 50px; color: #ff4081; 
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 4px 0 #f06292; /* Efecto 3D simple */
+        }
+        .trivia-btn:active { transform: translateY(4px); box-shadow: none; }
+        .trivia-question { font-size: 1.3rem; font-weight: bold; color: #5d4037; margin-bottom: 20px; text-align: center; }
+
+        /* JUEGO 2: MEMORIA */
+        .memory-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            width: 100%; margin-top: 10px;
+        }
+        .mem-card {
+            aspect-ratio: 1; background: #ff4081; border-radius: 12px;
+            cursor: pointer; position: relative; transform-style: preserve-3d;
+            transition: transform 0.3s; box-shadow: 0 4px 0 #c2185b;
+        }
+        .mem-card:active { transform: scale(0.95); }
+        .mem-card.flipped { transform: rotateY(180deg); background: #fff; box-shadow: 0 4px 0 #ddd; }
+        .mem-card img {
+            width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+            display: none; transform: rotateY(180deg);
+        }
+        .mem-card.flipped img { display: block; }
+
+        /* JUEGO 3: CATCHER */
+        #catcher-canvas { 
+            border: 4px solid #b2ebf2; background: #e0f7fa; 
+            width: 100%; height: 350px; border-radius: 20px; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+        .catcher-score { font-size: 2rem; font-family: 'Fredoka'; color: #00bcd4; margin-bottom: 10px; font-weight: bold; }
+        .catcher-controls { display: flex; width: 100%; justify-content: space-between; margin-top: 10px; color: #888; font-weight: bold; font-size: 0.9rem; }
+
+        /* FINAL */
+        .final-letter {
+            background: rgba(255,255,255,0.95); padding: 30px; border-radius: 30px; 
+            width: 85%; max-width: 400px; text-align: center; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2); border: 4px solid #fff;
+        }
+
+        /* Animaciones */
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes flicker { 0% { opacity: 1; } 100% { opacity: 0.8; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="ui-layer">
+        
+        <!-- 1. TARTA (NUEVA Y BRILLANTE) -->
+        <div id="screen-cake" class="screen">
+            <div class="title-pastel">Felices 13<br>Magda</div>
+            <div class="cake-container" id="cakeBtn">
+                <div class="plate"></div>
+                <div class="layer-bottom"><div class="icing"></div></div>
+                <div class="layer-middle"><div class="icing"></div></div>
+                <div class="layer-top"><div class="icing"></div></div>
+                <div class="candle"><div class="flame"></div></div>
+            </div>
+            <div class="progress-wrapper"><div class="progress-fill" id="progressBar"></div></div>
+            <p style="color: #fff; margin-top: 15px; font-size: 1.1rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">¡Toca rápido para celebrar! 🎂</p>
+        </div>
+
+        <!-- 2. VUELO -->
+        <div id="screen-flight" class="screen hidden">
+            <div id="flight-msg" class="flying-msg">Mensaje</div>
+        </div>
+
+        <!-- 3. GALERÍA -->
+        <div id="screen-gallery" class="screen hidden">
+            <h2 style="position:absolute; top: 5%; color: white; text-shadow: 2px 2px 0 #ff4081;">Recuerdos ✨</h2>
+            <div class="stack-area" id="stackContainer"></div>
+            <p style="position: absolute; bottom: 5%; color: #fff; font-weight: bold;">Desliza los recuerdos ❤️</p>
+        </div>
+
+        <!-- 4. RESUMEN TRANSICIÓN -->
+        <div id="screen-summary" class="screen hidden">
+            <h2 style="color:white; text-shadow: 2px 2px 0 #ff4081;">Nuestros lindos momentos</h2>
+            <div class="summary-grid" id="summaryGrid"></div>
+            <p style="color:white; margin-bottom:20px; font-weight:bold;">¿Lista para jugar? 🎮</p>
+            <button class="btn-game" onclick="startTrivia()">¡Vamos!</button>
+        </div>
+
+        <!-- 5. JUEGOS CONTAINER -->
+        <div id="screen-game" class="screen hidden">
+            <div id="game-content" class="game-container"></div>
+        </div>
+
+        <!-- 6. FINAL -->
+        <div id="screen-final" class="screen hidden">
+            <div class="final-letter">
+                <h1 style="color: #ff4081; margin:0;">¡Te Quiero!</h1>
+                <p style="font-size: 1.2rem; line-height: 1.6; color: #555; margin-top: 20px;">
+                    Gracias por jugar y por ser como eres.<br>
+                    Espero que este año 13 esté lleno de risas, memes y momentos increíbles.<br><br>
+                    <strong>Siempre contigo,<br>Fede</strong>
+                </p>
+                <div style="font-size: 3.5rem; margin-top: 20px;">❤️ 🐼 🐢</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA ---
+        const photos = [
+            { src: '1000202417.jpg', caption: 'La mas hermosa🐢❤️ },
+            { src: '1000202416.jpg', caption: 'Que MUJER😍' },
+            { src: '1000204235.jpg', caption: 'Bonita bella lindaaa💕' },
+            { src: '1000202414.jpg', caption: 'Preciosa hermosa guapa🥰' },
+            { src: '1000202415.jpg', caption: 'Te Amuuu❤️' },
+            { src: '1000202416.jpg', caption: 'Mi princesita hermosa' } 
+        ];
+
+        // --- 1. THREE.JS ---
+        const canvas = document.getElementById('bg-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const partGeo = new THREE.BufferGeometry();
+        const partCount = 2000;
+        const partPos = new Float32Array(partCount*3);
+        const partColors = new Float32Array(partCount*3);
+        const c1 = new THREE.Color(0xffffff); 
+        const c2 = new THREE.Color(0xfff9c4); 
+        const c3 = new THREE.Color(0xf8bbd0); 
+
+        for(let i=0; i<partCount*3; i+=3){
+            partPos[i] = (Math.random()-0.5)*1500;
+            partPos[i+1] = (Math.random()-0.5)*1500;
+            partPos[i+2] = (Math.random()-0.5)*1500;
+            let c = Math.random()<0.33?c1:(Math.random()<0.5?c2:c3);
+            partColors[i]=c.r; partColors[i+1]=c.g; partColors[i+2]=c.b;
+        }
+        partGeo.setAttribute('position', new THREE.BufferAttribute(partPos,3));
+        partGeo.setAttribute('color', new THREE.BufferAttribute(partColors,3));
+        const particles = new THREE.Points(partGeo, new THREE.PointsMaterial({size:5, vertexColors:true, transparent:true, opacity:0.7}));
+        scene.add(particles);
+        camera.position.z = 100;
+
+        function animateBg() {
+            requestAnimationFrame(animateBg);
+            particles.rotation.y += 0.001; particles.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animateBg();
+
+        // --- 2. NAVEGACIÓN ---
+        let taps = 0; const tapsGoal = 15;
+        const cakeBtn = document.getElementById('cakeBtn');
+        
+        cakeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            taps++;
+            document.getElementById('progressBar').style.width = `${(taps/tapsGoal)*100}%`;
+            cakeBtn.style.transform = `scale(${1 + taps*0.02})`;
+            confetti({ particleCount: 15, spread: 40, origin: { x: e.clientX/window.innerWidth, y: e.clientY/window.innerHeight }, colors: ['#ff4081', '#ffca28', '#fff'] });
+            if(taps >= tapsGoal) startFlight();
+            else setTimeout(()=>cakeBtn.style.transform='scale(1)', 100);
+        });
+
+        function switchScreen(from, to) {
+            document.getElementById(from).classList.add('hidden');
+            document.getElementById(to).classList.remove('hidden');
+        }
+
+        function startFlight() {
+            switchScreen('screen-cake', 'screen-flight');
+            document.getElementById('bg-canvas').style.opacity = '0';
+            const msgs = ["Eres Increíble ✨", "Te Quiero Mucho ❤️", "Felices 13 Años 🎉"];
+            const el = document.getElementById('flight-msg');
+            let delay = 0;
+            msgs.forEach(txt => {
+                setTimeout(() => {
+                    el.innerText = txt; el.classList.add('visible-msg');
+                    confetti({ particleCount: 30, spread: 100, origin: { y: 1 } });
+                    setTimeout(() => el.classList.remove('visible-msg'), 2000);
+                }, delay);
+                delay += 2500;
+            });
+            setTimeout(() => {
+                document.getElementById('bg-canvas').style.opacity = '0.6';
+                startGallery();
+            }, delay+500);
+        }
+
+        function startGallery() {
+            switchScreen('screen-flight', 'screen-gallery');
+            const cont = document.getElementById('stackContainer');
+            photos.slice().reverse().forEach((p, i) => {
+                const card = document.createElement('div');
+                card.className = 'photo-card';
+                card.style.transform = `rotate(${(Math.random()-0.5)*10}deg)`;
+                card.style.zIndex = i;
+                card.innerHTML = `<img src="${p.src}"><div class="photo-caption">${p.caption}</div>`;
+                card.onclick = () => {
+                    card.style.transform = `translate(100vw, -20vh) rotate(45deg)`;
+                    setTimeout(() => { card.remove(); if(cont.children.length===0) showSummary(); }, 300);
+                };
+                cont.appendChild(card);
+            });
+        }
+
+        function showSummary() {
+            switchScreen('screen-gallery', 'screen-summary');
+            const grid = document.getElementById('summaryGrid');
+            photos.forEach(p => {
+                const img = document.createElement('img'); img.src = p.src; img.className = 'summary-img';
+                grid.appendChild(img);
+            });
+        }
+
+        function endGameToFinal() {
+            switchScreen('screen-game', 'screen-final');
+            confetti({ particleCount: 200, spread: 120, origin: { y: 0.6 } });
+        }
+
+        // --- JUEGO 1: TRIVIA ---
+        let qIndex = 0;
+        const questions = [
+            { q: "¿Que me hace feliz?", a: "Todas las opciones anteriores jeje❤️", w: ["Tu risa😍", "Tu felicidad🥰"] },
+            { q: "¿Lo que más me gusta de ti?", a: "Tu risa", w: ["Tus ojos", "Todo"] },
+            { q: "¿Dónde nos conocimos?", a: "Colegio", w: ["Fiesta", "Internet"] },
+            { q: "¿Nuestra canción?", a: "Perfect", w: ["Despacito", "Baby Shark"] },
+            { q: "¿Quién es más gracioso?", a: "Los dos", w: ["Yo", "Tú"] },
+            { q: "¿Mi color favorito?", a: "Azul", w: ["Rojo", "Verde"] },
+            { q: "¿Tu cumpleaños?", a: "19 Enero", w: ["15 Enero", "20 Febrero"] },
+            { q: "¿Postre favorito?", a: "Helado", w: ["Pastel", "Fruta"] },
+            { q: "¿Día inolvidable?", a: "El primero", w: ["Ayer", "Mañana"] },
+            { q: "¿Cuánto te quiero?", a: "Infinito", w: ["Mucho", "Poquito"] }
+        ];
+
+        function startTrivia() {
+            switchScreen('screen-summary', 'screen-game'); qIndex = 0; renderTrivia();
+        }
+
+        function renderTrivia() {
+            if(qIndex >= questions.length) {
+                document.getElementById('game-content').innerHTML = `
+                    <h2 style="color:#ff4081">¡Perfecto! 🧠❤️</h2>
+                    <p>Nivel 1 Completado</p>
+                    <button class="btn-game" onclick="startMemory()">Siguiente Nivel >></button>
+                `;
+                return;
+            }
+            const q = questions[qIndex];
+            let opts = [...q.w, q.a].sort(()=>Math.random()-0.5);
+            let html = `<h3 style="color:#ff4081; margin-bottom:5px;">Trivia ${qIndex+1}/10</h3>
+                        <p class="trivia-question">${q.q}</p>`;
+            opts.forEach(o => {
+                html += `<button class="trivia-btn" onclick="checkTrivia(this, '${o===q.a}')">${o}</button>`;
+            });
+            document.getElementById('game-content').innerHTML = html;
+        }
+
+        function checkTrivia(btn, correct) {
+            if(correct === 'true') {
+                btn.style.background = "#b9f6ca"; btn.style.borderColor = "#00c853"; btn.style.color = "#00c853";
+                confetti({ particleCount: 20, spread: 50, origin: { y: 0.6 } });
+                qIndex++; setTimeout(renderTrivia, 800);
+            } else {
+                btn.style.background = "#ffcdd2"; btn.style.borderColor = "#e53935"; btn.style.color = "#e53935";
+                btn.innerText = "¡Nop! 🙈";
+            }
+        }
+
+        // --- JUEGO 2: MEMORIA ---
+        function startMemory() {
+            const cont = document.getElementById('game-content');
+            cont.innerHTML = `<h3 style="color:#ff4081">Memoria de Amor</h3><div class="memory-grid" id="memGrid"></div>`;
+            
+            let cards = [...photos, ...photos];
+            cards.sort(() => Math.random() - 0.5);
+            
+            const grid = document.getElementById('memGrid');
+            let flipped = []; let matched = 0;
+
+            cards.forEach((p) => {
+                const el = document.createElement('div'); el.className = 'mem-card';
+                el.innerHTML = `<img src="${p.src}">`;
+                el.onclick = () => {
+                    if(el.classList.contains('flipped') || flipped.length >= 2) return;
+                    el.classList.add('flipped'); flipped.push({el, src: p.src});
+                    if(flipped.length === 2) {
+                        if(flipped[0].src === flipped[1].src) {
+                            matched++; flipped = [];
+                            if(matched === 6) { 
+                                confetti({ particleCount: 200, spread: 100 });
+                                setTimeout(() => {
+                                    cont.innerHTML = `<h2>¡Genial! 🃏❤️</h2><p>Nivel 2 Completado</p><button class="btn-game" onclick="startCatcher()">Nivel Final >></button>`;
+                                }, 1500);
+                            }
+                        } else {
+                            setTimeout(() => { flipped[0].el.classList.remove('flipped'); flipped[1].el.classList.remove('flipped'); flipped = []; }, 800);
+                        }
+                    }
+                };
+                grid.appendChild(el);
+            });
+        }
+
+        // --- JUEGO 3: CATCHER ---
+        let catcherId;
+        function startCatcher() {
+            const cont = document.getElementById('game-content');
+            cont.innerHTML = `
+                <h3 style="margin:0; color:#ff4081">Lluvia de Cariño</h3>
+                <div class="catcher-score" id="cScore">0</div>
+                <canvas id="catcher-canvas" width="300" height="350"></canvas>
+                <div class="catcher-controls">
+                    <span>👈 Toca Izquierda</span><span>Toca Derecha 👉</span>
+                </div>
+                <button class="btn-game" onclick="endCatcher()" style="margin-top:10px; font-size:0.9rem; padding: 10px 20px;">Ver Sorpresa Final ❤️</button>
+            `;
+            initCatcherGame();
+        }
+
+        function endCatcher() {
+            if(catcherId) cancelAnimationFrame(catcherId);
+            endGameToFinal();
+        }
+
+        function initCatcherGame() {
+            const cvs = document.getElementById('catcher-canvas');
+            const ctx = cvs.getContext('2d');
+            let score = 0;
+            
+            const player = { x: 130, y: 300, w: 40, h: 40, emoji: "🐼" };
+            let items = [];
+            let frame = 0;
+
+            cvs.addEventListener('pointerdown', (e) => {
+                const rect = cvs.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                if(clickX < 150) player.x -= 40;
+                else player.x += 40;
+                player.x = Math.max(0, Math.min(260, player.x));
+            });
+
+            function loop() {
+                catcherId = requestAnimationFrame(loop);
+                frame++;
+                
+                ctx.fillStyle = "#e0f7fa"; ctx.fillRect(0,0,300,350);
+                
+                ctx.font = "35px Arial"; ctx.fillText(player.emoji, player.x, player.y + 35);
+
+                if(frame % 40 === 0) {
+                    const r = Math.random();
+                    let type = "❤️";
+                    if(r > 0.6) type = "🎁";
+                    if(r > 0.8) type = "💕";
+                    if(r > 0.9) type = "☁️"; 
+                    items.push({ x: Math.random() * 260, y: -30, type: type, speed: 2 + Math.random()*2 });
+                }
+
+                for(let i=0; i<items.length; i++) {
+                    const it = items[i];
+                    it.y += it.speed;
+                    ctx.fillText(it.type, it.x, it.y);
+
+                    if(it.y > player.y && it.y < player.y + player.h && it.x > player.x - 20 && it.x < player.x + player.w) {
+                        if(it.type === "☁️") {
+                             cvs.style.transform = "translateX(5px)";
+                             setTimeout(()=>cvs.style.transform="none", 100);
+                        } else {
+                            score++;
+                            document.getElementById('cScore').innerText = score;
+                            if(score % 5 === 0) confetti({ particleCount: 10, spread: 30, origin: { y: 0.8 } });
+                        }
+                        items.splice(i, 1); i--;
+                    }
+                    else if(it.y > 360) {
+                        items.splice(i, 1); i--;
+                    }
+                }
+            }
+            loop();
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
+
+
